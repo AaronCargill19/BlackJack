@@ -106,9 +106,7 @@ public:
     std::string playerName;
     Hand playerHand;
 
-    GenericPlayer(std::string playerName) {
-        playerName = playerName;
-    }
+    GenericPlayer(std::string name) : playerName(name) {}
 
     bool isBusted() {
         if (playerHand.getTotal() > 21) {
