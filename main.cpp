@@ -1,6 +1,6 @@
 #include <iostream>
-
-
+#include <vector>
+#include <string>
 
 class Card {
 
@@ -11,22 +11,20 @@ private:
     std::string RANK; //A,1,2,3,4,5,6,7,8,9,10,J,Q,K
     char SUIT;
 
-    Card(std::string rank = "A", char suit = 'S', bool isFU = true) {
-        RANK = rank;
-        SUIT = suit;
-        isFaceUp = isFU;
+    Card(std::string rank = "A", char suit = 'S', bool isFU = true)
+        : RANK(rank), SUIT(suit), isFaceUp(isFU) {
     }
-
-    int getValue() {
+// returns the blackjack value of the card
+    int getValue() const {
         int value = 0;
         if (!isFaceUp) {
             return value;
         }
         //try to convert to int value first
         try {
-            value = std::stoi(RANK);
+            value = std::stoi(RANK); // works for cards 2–10
         }
-        catch (std::invalid_argument) {
+        catch (const std::invalid_argument&) {
             if (RANK == "A") {
                 value = 1;
             }
@@ -38,12 +36,17 @@ private:
     }
 
     void flip() {
-        if (isFaceUp) {
-            isFaceUp = false;
+        isFaceUp = !isFaceUp;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Card& card) {
+        if (card.isFaceUp) {
+            os << card.RANK << card.SUIT;
         }
         else {
-            isFaceUp = true;
+            os << "XX";
         }
+        return os;
     }
 
 };
