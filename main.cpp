@@ -286,6 +286,10 @@ public:
         }
         house.flipFirstCard();
 
+
+        // THIS IS NOT DONE YET. Got tired working on it later...    
+
+        
     }
 };
 
