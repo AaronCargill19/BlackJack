@@ -339,7 +339,7 @@ public:
 
             //Player busted
             if (players[j].isBusted()) {
-                std::cout << "Player_" << j+1 << " loses :( ";
+                std::cout << "Player_" << j+1 << " loses :( " << std::endl;
             }
 
             
