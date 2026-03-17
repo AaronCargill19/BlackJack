@@ -2,18 +2,18 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <random>
 
 
 class Card {
 
-private:
-    bool isFaceUp;
 
     public:
-    char RANK; //A,1,2,3,4,5,6,7,8,9,10,J,Q,K
+    bool isFaceUp;
+    char RANK; //A,2,3,4,5,6,7,8,9,10,J,Q,K
     char SUIT;
 
-    Card(char rank = 'A', char suit = 'S', bool isFU = false)
+    Card(char rank = 'A', char suit = 'S', bool isFU = true)
         : RANK(rank), SUIT(suit), isFaceUp(isFU) {
     }
 // returns the blackjack value of the card
@@ -39,16 +39,6 @@ private:
 
     void flip() {
         isFaceUp = !isFaceUp;
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Card& card) {
-        if (card.isFaceUp) {
-            os << card.RANK << card.SUIT;
-        }
-        else {
-            os << "XX";
-        }
-        return os;
     }
 
 };
@@ -106,6 +96,16 @@ public:
         delete cardVector.back();
         cardVector.pop_back();
         return topCard;
+    }
+
+    void displayHand() {
+        for (int i = 0; i < cardVector.size(); i++) {
+            if (cardVector[i]->isFaceUp) {
+                std::cout << cardVector[i]->RANK << cardVector[i]->SUIT << " ";
+            }
+            else {std::cout << "XX ";}
+        }
+        std::cout << "- " << getTotal() << std::endl;
     }
 
 };
@@ -176,14 +176,16 @@ class House : public GenericPlayer {
 public:
     House(std::string n) : GenericPlayer(n) {}
 
-    void isHitting(Card card) {
-        while (playerHand.getTotal() <= 16) {
-            playerHand.addCard(card);
+    bool isHitting(Card card) {
+        playerHand.addCard(card);
+        if (playerHand.getTotal() > 16) {
+            return false;
         }
+        return true;
     }
 
     void flipFirstCard() {
-        if (playerHand.cardVector.size() != 2) {
+        if (playerHand.cardVector.size() == 0) {
             std::cout << "      -       There are not enough cards to flip      -       " << std::endl;
             return;
         }
@@ -207,7 +209,7 @@ public:
         std::cout << "Populating new deck..." << std::endl;
         clearHand();
 
-        std::vector<char> ranks = {'A',1,2,3,4,5,6,7,8,9,'T','J','Q','K'};
+        std::vector<char> ranks = {'A','2','3','4','5','6','7','8','9','T','J','Q','K'};
         std::vector suits = {'C','D','H','S'};
 
         for (int suitIter = 0; suitIter < 4; suitIter++) {
@@ -223,21 +225,20 @@ public:
 
 
     void shuffle() {
-        random_shuffle(cardVector.begin(), cardVector.end());
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(cardVector.begin(), cardVector.end(), g);
     }
 
 
 
-    void deal(GenericPlayer activePlayer) {
-        Hand activeHand = activePlayer.playerHand;
+    void deal(GenericPlayer& activePlayer) {
+        std::cout << "Dealing to " << activePlayer.playerName << std::endl;
         Card topCard = popTop();
-        activeHand.addCard(topCard);
+        activePlayer.playerHand.addCard(topCard); // modifies the original
     }
 
-
-    void additionalCards(GenericPlayer activePlayer) {
-
-        //Check to see if cards can be dealt:
+    void additionalCards(GenericPlayer& activePlayer) {
         if (activePlayer.isBusted()) {
             std::cout << activePlayer.playerName << " is busted, cannot add cards..." << std::endl;
             return;
@@ -245,6 +246,10 @@ public:
 
         Card topCard = popTop();
         activePlayer.playerHand.addCard(topCard);
+
+        if (activePlayer.isBusted()) {
+            activePlayer.bust();
+        }
     }
 
 };
@@ -265,6 +270,7 @@ public:
 
         for (int i = 1; i <= playerNumber; i++) {
             GenericPlayer newPlayer = GenericPlayer("Player_" + std::to_string(i));
+            players.push_back(newPlayer);
         }
 
         gameDeck.populate();
@@ -275,30 +281,91 @@ public:
     void play() {
         std::cout << "Starting Game . . . " << std::endl;
 
+        //Deal cards
         for (int i = 0; i < 2; i++) {
             gameDeck.deal(house);
 
             for (int j = 0; j < playerNumber; j++) {
-                GenericPlayer activePlayer = players[0];
-
-                gameDeck.deal(activePlayer);
+                gameDeck.deal(players[j]);
             }
         }
+        std::cout << "Cards dealt . . . " << std::endl;
+
         house.flipFirstCard();
 
+        std::cout << "House: ";
+        house.playerHand.displayHand();
 
-        // THIS IS NOT DONE YET. Got tired working on it later...    
+        for (int j = 0; j < playerNumber; j++) {
+            std::cout << "Player_" << j+1 << ": ";
+            players[j].playerHand.displayHand();
+        }
 
-        
+
+        //Iterate through each player until done hitting/busted
+        for (int j = 0; j < playerNumber; j++) {
+            bool isHitting = true;
+            while (isHitting && !players[j].isBusted()) {
+                std::cout << "Player_" << j+1 << "'s turn, make a move!  -  (S/H)' ";
+                players[j].playerHand.displayHand();
+
+                char input;
+                std::cin >> input;
+
+                switch (tolower(input)) {
+                    case 's': {
+                        isHitting = false;
+                    }break;
+                    case 'h': {
+                        gameDeck.additionalCards(players[j]);
+                        players[j].playerHand.displayHand();
+                    }break;
+                }
+            }
+        }
+
+        house.flipFirstCard();
+        house.playerHand.displayHand();
+        while (house.playerHand.getTotal() <= 16) {
+            gameDeck.additionalCards(house);
+        }
+        house.playerHand.displayHand();
+
+
+        //Check win/lose/draw
+        bool houseBusted = house.isBusted();
+
+        for (int j = 0; j < playerNumber; j++) {
+
+            //Player busted
+            if (players[j].isBusted()) {
+                std::cout << "Player_" << j+1 << " loses :( ";
+            }
+
+            
+            else {
+                //House busted, player not
+                if (houseBusted && !players[j].isBusted()) {
+                    std::cout << "Player_" << j+1 << " wins!" << std::endl;
+                }
+
+                //None bust -> check vals
+                else if (house.playerHand.getTotal() > players[j].playerHand.getTotal()) {
+                    std::cout << "Player_" << j+1 << " loses :( " << std::endl;
+                }
+                else if (house.playerHand.getTotal() < players[j].playerHand.getTotal()) {
+                    std::cout << "Player_" << j+1 << " wins!" << std::endl;
+                }
+                else if (house.playerHand.getTotal() == players[j].playerHand.getTotal()) {
+                    std::cout << "Player_" << j+1 << " pushes :/" << std::endl;
+                }
+            }
+        }
     }
 };
 
 
 int main(){
-    Card aceSpades = Card('A', 'S');
-    Card tenHearts = Card('T', 'H');
-    Hand hand;
-    hand.addCard(aceSpades);
-    hand.addCard(tenHearts);
-    std::cout << hand.getTotal() << std::endl;
+    Game newGame = Game();
+    newGame.play();
 }
