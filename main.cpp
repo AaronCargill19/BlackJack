@@ -113,13 +113,11 @@ public:
     }
 
     void displayHand() {
-        for (int i = 0; i < static_cast<int>(cardVector.size()); i++) {
+        for (int i = 0; i < cardVector.size(); i++) {
             if (cardVector[i]->isFaceUp) {
                 std::cout << cardVector[i]->RANK << cardVector[i]->SUIT << " ";
             }
-            else {
-                std::cout << "XX ";
-            }
+            else {std::cout << "XX ";}
         }
         std::cout << "- " << getTotal() << std::endl;
     }
@@ -259,6 +257,8 @@ public:
     }
 
     void additionalCards(GenericPlayer& activePlayer) {
+
+        //Check to see if cards can be dealt:
         if (activePlayer.isBusted()) {
             std::cout << activePlayer.playerName << " is busted, cannot add cards..." << std::endl;
             return;
@@ -351,7 +351,7 @@ public:
 
                 char input;
                 std::cin >> input;
-                input = static_cast<char>(tolower(input));
+                input = tolower(input);
 
                 switch (input) {
                     case 's': {
@@ -362,7 +362,7 @@ public:
                         players[j].playerHand.displayHand();
                     }break;
                     default: {
-                        std::cout << "Invalid input. Please enter S or H." << std::endl;
+                        std::cout << "Invalid input. Use S or H." << std::endl;
                     }break;
                 }
             }
@@ -388,7 +388,7 @@ public:
                 std::cout << "Player_" << j+1 << " loses :( " << std::endl;
             }
 
-
+            
             else {
                 //House busted, player not
                 if (houseBusted && !players[j].isBusted()) {
