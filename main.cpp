@@ -41,6 +41,53 @@ class Card {
         isFaceUp = !isFaceUp;
     }
 
+    std::string getRankString() const {
+        if (RANK == 'T') {
+            return "10";
+        }
+        return std::string(1, RANK);
+    }
+
+    std::string getSuitString() const {
+        switch (SUIT) {
+            case 'S': return "♠";
+            case 'H': return "♥";
+            case 'D': return "♦";
+            case 'C': return "♣";
+            default:  return "?";
+        }
+    }
+
+    std::vector<std::string> getCardArt() const {
+        if (!isFaceUp) {
+            return {
+                ".--------.",
+                "|########|",
+                "|########|",
+                "|########|",
+                "'--------'"
+            };
+        }
+
+        std::string rank = getRankString();
+        std::string suit = getSuitString();
+
+        std::string leftRank = rank;
+        std::string rightRank = rank;
+
+        if (rank.length() == 1) {
+            leftRank += " ";
+            rightRank = " " + rank;
+        }
+
+        return {
+            ".--------.",
+            "|" + leftRank + "      |",
+            "|   " + suit + "    |",
+            "|      " + rightRank + "|",
+            "'--------'"
+        };
+    }
 };
 
 
@@ -99,13 +146,22 @@ public:
     }
 
     void displayHand() {
-        for (int i = 0; i < cardVector.size(); i++) {
-            if (cardVector[i]->isFaceUp) {
-                std::cout << cardVector[i]->RANK << cardVector[i]->SUIT << " ";
-            }
-            else {std::cout << "XX ";}
+        if (cardVector.empty()) {
+            std::cout << "(empty hand)" << std::endl;
+            return;
         }
-        std::cout << "- " << getTotal() << std::endl;
+
+        for (int line = 0; line < 5; line++) {
+            for (int i = 0; i < cardVector.size(); i++) {
+                if (cardVector[i] != NULL) {
+                    std::vector<std::string> art = cardVector[i]->getCardArt();
+                    std::cout << art[line] << "  ";
+                }
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "Total: " << getTotal() << std::endl;
     }
 
 };
@@ -293,11 +349,11 @@ public:
 
         house.flipFirstCard();
 
-        std::cout << "House: ";
+        std::cout << "House: " << std::endl;
         house.playerHand.displayHand();
 
         for (int j = 0; j < playerNumber; j++) {
-            std::cout << "Player_" << j+1 << ": ";
+            std::cout << "Player_" << j+1 << ": " << std::endl;
             players[j].playerHand.displayHand();
         }
 
@@ -305,8 +361,12 @@ public:
         //Iterate through each player until done hitting/busted
         for (int j = 0; j < playerNumber; j++) {
             bool isHitting = true;
-            while (isHitting && !players[j].isBusted()) {
-                std::cout << "Player_" << j+1 << "'s turn, make a move!  -  (S/H)' ";
+            while (isHitting && !players[j].isBusted() && players[j].playerHand.getTotal() != 21) {
+
+                std::cout << "House: " << std::endl;
+                house.playerHand.displayHand();
+
+                std::cout << "Player_" << j+1 << "'s turn, make a move!  -  (S/H)" << std::endl;
                 players[j].playerHand.displayHand();
 
                 char input;
@@ -325,11 +385,13 @@ public:
         }
 
         house.flipFirstCard();
+        std::cout << "House: " << std::endl;
         house.playerHand.displayHand();
         while (house.playerHand.getTotal() <= 16) {
+            std::cout << "House hits! " <<std::endl;
             gameDeck.additionalCards(house);
+            house.playerHand.displayHand();
         }
-        house.playerHand.displayHand();
 
 
         //Check win/lose/draw
@@ -342,7 +404,7 @@ public:
                 std::cout << "Player_" << j+1 << " loses :( " << std::endl;
             }
 
-            
+
             else {
                 //House busted, player not
                 if (houseBusted && !players[j].isBusted()) {
