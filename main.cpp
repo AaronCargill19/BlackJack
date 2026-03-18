@@ -4,6 +4,8 @@
 #include <string>
 #include <random>
 #include <cctype>
+#include <chrono>
+#include <thread>
 
 
 class Card {
@@ -197,6 +199,14 @@ public:
 
     void bust() {
         std::cout << playerName << " is Busted!"<< std::endl;
+        std::cout <<
+        "██████╗ ██╗   ██╗███████╗████████╗███████╗██████╗ \n"
+        "██╔══██╗██║   ██║██╔════╝╚══██╔══╝██╔════╝██╔══██╗\n"
+        "██████╔╝██║   ██║███████╗   ██║   █████╗  ██║  ██║\n"
+        "██╔══██╗██║   ██║╚════██║   ██║   ██╔══╝  ██║  ██║\n"
+        "██████╔╝╚██████╔╝███████║   ██║   ███████╗██████╔╝\n"
+        "╚═════╝  ╚═════╝ ╚══════╝   ╚═╝   ╚══════╝╚═════╝ \n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
 };
@@ -287,6 +297,7 @@ public:
         }
 
         std::cout << "* *    Deck generated   * * " << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(333));
     }
 
 
@@ -301,8 +312,11 @@ public:
 
     void deal(GenericPlayer& activePlayer) {
         if (cardVector.empty()) {
-            std::cout << "No more cards left to deal." << std::endl;
-            return;
+            std::cout << "No more cards left to deal. Creating new deck and shuffling . . ." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(333));
+            clearHand();
+            populate();
+            shuffle();
         }
 
         std::cout << "Dealing to " << activePlayer.playerName << std::endl;
@@ -319,8 +333,11 @@ public:
         }
 
         if (cardVector.empty()) {
-            std::cout << "No more cards left to deal." << std::endl;
-            return;
+            std::cout << "No more cards left to deal. Creating new deck and shuffling . . ." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(333));
+            clearHand();
+            populate();
+            shuffle();
         }
 
         Card topCard = popTop();
@@ -365,6 +382,8 @@ public:
     void play() {
         std::cout << "Starting Game . . . " << std::endl;
 
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
         house.playerHand.clearHand();
         for (int i = 0; i < playerNumber; i++) {
             players[i].playerHand.clearHand();
@@ -375,25 +394,42 @@ public:
             gameDeck.shuffle();
         }
 
+        bool flippedFC = false;
+
         //Deal cards
         for (int i = 0; i < 2; i++) {
+
             gameDeck.deal(house);
+
+            if (!flippedFC) {
+                house.flipFirstCard();
+                flippedFC = true;
+            }
+
+
+            std::cout << "House: " << std::endl;
+            house.playerHand.displayHand();
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
             for (int j = 0; j < playerNumber; j++) {
                 gameDeck.deal(players[j]);
+
+                std::cout << "Player_" << j+1 << ": " << std::endl;
+                players[j].playerHand.displayHand();
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
             }
         }
         std::cout << "Cards dealt . . . " << std::endl;
 
-        house.flipFirstCard();
+        std::cout << "██████╗ ██╗      █████╗  ██████╗██╗  ██╗     ██╗ █████╗  ██████╗██╗  ██╗\n";
+        std::cout << "██╔══██╗██║     ██╔══██╗██╔════╝██║ ██╔╝     ██║██╔══██╗██╔════╝██║ ██╔╝\n";
+        std::cout << "██████╔╝██║     ███████║██║     █████╔╝      ██║███████║██║     █████╔╝ \n";
+        std::cout << "██╔══██╗██║     ██╔══██║██║     ██╔═██╗ ██   ██║██╔══██║██║     ██╔═██╗ \n";
+        std::cout << "██████╔╝███████╗██║  ██║╚██████╗██║  ██╗╚█████╔╝██║  ██║╚██████╗██║  ██╗\n";
+        std::cout << "╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝ ╚════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝\n";
 
-        std::cout << "House: " << std::endl;
-        house.playerHand.displayHand();
-
-        for (int j = 0; j < playerNumber; j++) {
-            std::cout << "Player_" << j+1 << ": " << std::endl;
-            players[j].playerHand.displayHand();
-        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
 
         //Iterate through each player until done hitting/busted
@@ -424,13 +460,21 @@ public:
             }
         }
 
+        std::cout << std::endl;
+        std::cout << std::endl;
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(333));
+
         house.flipFirstCard();
         std::cout << "House: " << std::endl;
         house.playerHand.displayHand();
+        std::this_thread::sleep_for(std::chrono::milliseconds(333));
+
         while (house.isHitting()) {
             gameDeck.additionalCards(house);
             std::cout << "House: " << std::endl;
             house.playerHand.displayHand();
+            std::this_thread::sleep_for(std::chrono::milliseconds(333));
         }
 
 
