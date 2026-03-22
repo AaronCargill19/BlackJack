@@ -7,10 +7,9 @@
 #include <chrono>
 #include <filesystem>
 #include <thread>
-
+#include <numeric>
 
 class Card {
-
 
     public:
     bool isFaceUp;
