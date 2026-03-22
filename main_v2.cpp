@@ -19,15 +19,17 @@ class Card {
     Card(char rank = 'A', char suit = 'S', bool isFU = true)
         : RANK(rank), SUIT(suit), isFaceUp(isFU) {
     }
-// returns the blackjack value of the card
+
+    // returns the blackjack value of the card
     int getValue() const {
         int value = 0;
         if (!isFaceUp) {
             return value;
         }
+
         //try to convert to int value first
         if (isdigit(RANK)) {
-            value = RANK - '0'; // works for cards 2–10
+            value = RANK - '0'; // works for cards 2–9
         }
         else {
             if (RANK == 'A') {
@@ -44,7 +46,7 @@ class Card {
         isFaceUp = !isFaceUp;
     }
 
-std::string getRankString() const {
+    std::string getRankString() const {
         if (RANK == 'T') {
             return "10";
         }
@@ -117,7 +119,7 @@ public:
 
         for (iter = cardVector.begin(); iter != cardVector.end(); ++iter) {
             delete *iter;
-            *iter = NULL;
+            *iter = nullptr;
         }
         cardVector.clear();
     }
@@ -132,7 +134,7 @@ public:
         bool hasAce = false;
 
         for (std::vector<Card*>::iterator iter = cardVector.begin(); iter != cardVector.end(); ++iter) {
-            if (*iter != NULL) {
+            if (*iter != nullptr) {
                 total += (*iter)->getValue();
                 if ((*iter)->RANK == 'A' && (*iter)->isFaceUp) {
                     hasAce = true;
@@ -166,8 +168,8 @@ public:
         }
 
         for (int line = 0; line < 5; line++) {
-            for (int i = 0; i < cardVector.size(); i++) {
-                if (cardVector[i] != NULL) {
+            for (int i = 0; i < static_cast<int>(cardVector.size()); i++) {
+                if (cardVector[i] != nullptr) {
                     std::vector<std::string> art = cardVector[i]->getCardArt();
                     std::cout << art[line] << "  ";
                 }
@@ -175,7 +177,13 @@ public:
             std::cout << std::endl;
         }
 
-        std::cout << "Total: " << getTotal() << std::endl;
+        //If first card is face down, hide the total for visuals
+        if (cardVector[0] != nullptr && !cardVector[0]->isFaceUp) {
+            std::cout << "Total: ?" << std::endl;
+        }
+        else {
+            std::cout << "Total: " << getTotal() << std::endl;
+        }
     }
 
 };
@@ -198,8 +206,12 @@ public:
         return false;
     }
 
+    bool hasBlackjack() {
+        return playerHand.cardVector.size() == 2 && playerHand.getTotal() == 21;
+    }
+
     void bust() {
-        std::cout << playerName << " is Busted!"<< std::endl;
+        std::cout << playerName << " is Busted!" << std::endl;
         std::cout <<
         "██████╗ ██╗   ██╗███████╗████████╗███████╗██████╗ \n"
         "██╔══██╗██║   ██║██╔════╝╚══██╔══╝██╔════╝██╔══██╗\n"
@@ -227,9 +239,6 @@ class Player : public GenericPlayer {
         }
     }
 
-
-
-
     void win() {
         std::cout << playerName << " has won!" << std::endl;
     }
@@ -243,9 +252,6 @@ class Player : public GenericPlayer {
     }
 
 };
-
-
-
 
 
 class House : public GenericPlayer {
@@ -272,7 +278,6 @@ public:
 
 class Deck : public Hand {
 
-
 public:
 
     Deck() {
@@ -298,15 +303,11 @@ public:
         std::this_thread::sleep_for(std::chrono::milliseconds(333));
     }
 
-
-
     void shuffle() {
         std::random_device rd;
         std::mt19937 g(rd());
         std::shuffle(cardVector.begin(), cardVector.end(), g);
     }
-
-
 
     void deal(GenericPlayer& activePlayer) {
         if (cardVector.empty()) {
@@ -357,12 +358,11 @@ public:
     Deck gameDeck = Deck();
     int startingCurrency;
 
-    Game(int curr){
+    Game(int curr) {
         startingCurrency = curr;
         gameDeck.populate();
         gameDeck.shuffle();
     }
-
 
     void play() {
 
@@ -391,12 +391,11 @@ public:
                 break; // valid input
             }
 
+            players.reserve(playerNumber);
             for (int i = 1; i <= playerNumber; i++) {
                 GenericPlayer newPlayer = GenericPlayer("Player_" + std::to_string(i));
                 players.push_back(newPlayer);
             }
-
-
 
             std::cout << "Starting Game . . . " << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -405,7 +404,7 @@ public:
 
             //Distribute currency accross hands
             for (int i = 0; i < playerNumber; i++) {
-                players[i].bettedAmount = int(startingCurrency/playerNumber);
+                players[i].bettedAmount = int(startingCurrency / playerNumber);
             }
 
             house.playerHand.clearHand();
@@ -417,7 +416,6 @@ public:
                 gameDeck.populate();
                 gameDeck.shuffle();
             }
-
 
             bool flippedFC = false;
             //Deal cards
@@ -437,10 +435,9 @@ public:
                 for (int j = 0; j < playerNumber; j++) {
                     gameDeck.deal(players[j]);
 
-                    std::cout << "Player_" << j+1 << ": " << std::endl;
+                    std::cout << "Player_" << j + 1 << ": " << std::endl;
                     players[j].playerHand.displayHand();
                     std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
                 }
             }
             std::cout << "Cards dealt . . . " << std::endl;
@@ -454,31 +451,38 @@ public:
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
 
-
             //Iterate through each player until done hitting/busted
             for (int j = 0; j < playerNumber; j++) {
+
+                if (players[j].hasBlackjack()) {
+                    std::cout << "Player_" << j + 1 << " has BLACKJACK!" << std::endl;
+                    players[j].playerHand.displayHand();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    continue;
+                }
+
                 bool isHitting = true;
                 while (isHitting && !players[j].isBusted()) {
                     std::cout << "House: " << std::endl;
                     house.playerHand.displayHand();
-                    std::cout << "Player_" << j+1 << "'s turn, make a move!  -  (S/H) " << std::endl;
+                    std::cout << "Player_" << j + 1 << "'s turn, make a move!  -  (S/H) " << std::endl;
                     players[j].playerHand.displayHand();
 
                     char input;
                     std::cin >> input;
-                    input = tolower(input);
+                    input = static_cast<char>(tolower(input));
 
                     switch (input) {
                         case 's': {
                             isHitting = false;
-                        }break;
+                        } break;
                         case 'h': {
                             gameDeck.additionalCards(players[j]);
                             players[j].playerHand.displayHand();
-                        }break;
+                        } break;
                         default: {
                             std::cout << "Invalid input. Use S or H." << std::endl;
-                        }break;
+                        } break;
                     }
                 }
             }
@@ -500,7 +504,6 @@ public:
                 std::this_thread::sleep_for(std::chrono::milliseconds(750));
             }
 
-
             //Check win/lose/draw
             bool houseBusted = house.isBusted();
 
@@ -508,17 +511,16 @@ public:
 
                 //Player busted
                 if (players[j].isBusted()) {
-                    std::cout << "Player_" << j+1 << " loses :( " << std::endl;
+                    std::cout << "Player_" << j + 1 << " loses :( " << std::endl;
                     players[j].bettedAmount = 0;
                     std::cout << " - Result - $" << players[j].bettedAmount << std::endl;
                     std::cout << std::endl;
                 }
 
-
                 else {
                     //House busted, player not
                     if (houseBusted && !players[j].isBusted()) {
-                        std::cout << "Player_" << j+1 << " wins!" << std::endl;
+                        std::cout << "Player_" << j + 1 << " wins!" << std::endl;
                         players[j].bettedAmount *= 2;
                         std::cout << " - Result - $" << players[j].bettedAmount << std::endl;
                         std::cout << std::endl;
@@ -526,19 +528,19 @@ public:
 
                     //None bust -> check vals
                     else if (house.playerHand.getTotal() > players[j].playerHand.getTotal()) {
-                        std::cout << "Player_" << j+1 << " loses :( " << std::endl;
+                        std::cout << "Player_" << j + 1 << " loses :( " << std::endl;
                         players[j].bettedAmount = 0;
                         std::cout << " - Result - $" << players[j].bettedAmount << std::endl;
                         std::cout << std::endl;
                     }
                     else if (house.playerHand.getTotal() < players[j].playerHand.getTotal()) {
-                        std::cout << "Player_" << j+1 << " wins!" << std::endl;
+                        std::cout << "Player_" << j + 1 << " wins!" << std::endl;
                         players[j].bettedAmount *= 2;
                         std::cout << " - Result - $" << players[j].bettedAmount << std::endl;
                         std::cout << std::endl;
                     }
                     else if (house.playerHand.getTotal() == players[j].playerHand.getTotal()) {
-                        std::cout << "Player_" << j+1 << " pushes :/" << std::endl;
+                        std::cout << "Player_" << j + 1 << " pushes :/" << std::endl;
                         std::cout << " - Result - $" << players[j].bettedAmount << std::endl;
                         std::cout << std::endl;
                     }
@@ -547,19 +549,19 @@ public:
 
             //Sum all wins and losses
             int totalBets = std::accumulate(players.begin(), players.end(), 0,
-            [](int sum, const GenericPlayer& p) { return sum + p.bettedAmount; });
+                [](int sum, const GenericPlayer& p) { return sum + p.bettedAmount; });
             std::cout << " - - - Resulting sum: $" << totalBets << " - - - " << std::endl;
             std::cout << std::endl;
             startingCurrency = totalBets;
 
             if (totalBets == 0) {
                 std::cout <<
-"██╗   ██╗ ██████╗ ██╗   ██╗    ██╗      ██████╗ ███████╗███████╗   :( \n"
-"╚██╗ ██╔╝██╔═══██╗██║   ██║    ██║     ██╔═══██╗██╔════╝██╔════╝\n"
-" ╚████╔╝ ██║   ██║██║   ██║    ██║     ██║   ██║███████╗█████╗  \n"
-"  ╚██╔╝  ██║   ██║██║   ██║    ██║     ██║   ██║╚════██║██╔══╝  \n"
-"   ██║   ╚██████╔╝╚██████╔╝    ███████╗╚██████╔╝███████║███████╗\n"
-"   ╚═╝    ╚═════╝  ╚═════╝     ╚══════╝ ╚═════╝ ╚══════╝╚══════╝\n";
+                "██╗   ██╗ ██████╗ ██╗   ██╗    ██╗      ██████╗ ███████╗███████╗   :( \n"
+                "╚██╗ ██╔╝██╔═══██╗██║   ██║    ██║     ██╔═══██╗██╔════╝██╔════╝\n"
+                " ╚████╔╝ ██║   ██║██║   ██║    ██║     ██║   ██║███████╗█████╗  \n"
+                "  ╚██╔╝  ██║   ██║██║   ██║    ██║     ██║   ██║╚════██║██╔══╝  \n"
+                "   ██║   ╚██████╔╝╚██████╔╝    ███████╗╚██████╔╝███████║███████╗\n"
+                "   ╚═╝    ╚═════╝  ╚═════╝     ╚══════╝ ╚═════╝ ╚══════╝╚══════╝\n";
                 return;
             }
 
@@ -575,7 +577,7 @@ public:
 };
 
 
-int main(){
+int main() {
     Game newGame = Game(1000);
     newGame.play();
 }
